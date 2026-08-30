@@ -214,23 +214,37 @@ while True:
             thumb_middle_distance > 45
         )
         if scroll_gesture:
-            # Middle fingertip
-            middle_y = landmarks[12][2]
+            # Use both INDEX + MIDDLE Fingertips
+            index_y_scroll = landmarks[8][2]
+            middle_y_scroll = landmarks[12][2]
+
+            # Average position of index + middle
+            current_scroll_y = (
+                index_y_scroll + middle_y_scroll
+            ) / 2
 
             # First frame of scrolling
             if previous_scroll_y is None:
-                previous_scroll_y = middle_y
+                previous_scroll_y = current_scroll_y
             else:
-                movement = previous_scroll_y - middle_y
+                # Calculate vertical movement
+                movement = previous_scroll_y - current_scroll_y
+
+                #Scroll speed
+                # Higher sensitivity = faster scrolling
+                scroll_amount = int(abs(movement) / 3)
+
+                # Always scroll atleast 1 unit
+                scroll_amount = max(1, scroll_amount)
 
                 # Scroll UP
                 if movement > scroll_threshold:
-                    pyautogui.scroll(1)
-                    previous_scroll_y = middle_y
+                    pyautogui.scroll(scroll_amount)
+                    previous_scroll_y = current_scroll_y
                 # Scroll DOWN
                 elif movement < -scroll_threshold:
-                    pyautogui.scroll(-1)
-                    previous_scroll_y = middle_y
+                    pyautogui.scroll(-scroll_amount)
+                    previous_scroll_y = current_scroll_y
         else:
             #Reset when scroll gesture ends
             previous_scroll_y = None                    
