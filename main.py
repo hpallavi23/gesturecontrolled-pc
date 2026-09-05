@@ -4,6 +4,10 @@ import cv2
 import pyautogui
 import math
 
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+
 from hand_detector import HandDetector
 from gesture_recognizer import GestureRecognizer
 from collections import Counter
@@ -30,6 +34,13 @@ history_size = 7
 # Screen dimensions
 screen_width, screen_height = pyautogui.size()
 
+# SYSTEM VOLUME CONTROL
+
+devices = AudioUtilities.GetSpeakers()
+volume = devices.EndpointVolume
+
+# Volume range in Windows
+volume_min, volume_max, _ = volume.GetVolumeRange()
 
 # Mouse smoothing
 prev_x = screen_width // 2
@@ -44,6 +55,11 @@ right_click_cooldown = 0
 
 previous_scroll_y = None
 scroll_threshold = 15
+
+# Volume control
+previous_volume_y = None
+volume_threshold = 8
+volume_step = 2
 
 # Check if a hand was detected
 while True:
@@ -165,8 +181,7 @@ while True:
 
         # Pinch detected
         click_gesture = (
-            distance < pinch_threshold and
-            fingers[4] == 0
+            fingers == [1, 1, 0, 0, 0]
         )
 
         # Click only when pinch first appears
@@ -247,8 +262,68 @@ while True:
                     previous_scroll_y = current_scroll_y
         else:
             #Reset when scroll gesture ends
-            previous_scroll_y = None                    
+            previous_scroll_y = None
 
+        # INDEX + PINKY -> VOLUME CONTROL
+        volume_gesture = (
+            fingers[1] == 1 and
+            fingers[2] == 0 and
+            fingers[3] == 0 and
+            fingers[4] == 1
+        )
+
+        if volume_gesture:
+
+            # Index fingertip Y
+            index_y_volume = landmarks[8][2]
+
+            # Pinky fingertip Y
+            pinky_y_volume = landmarks[20][2]
+
+            # Average position of index + pinky
+            current_volume_y = (
+                index_y_volume + pinky_y_volume
+            ) / 2
+
+            # First frame of volume gesture
+            if previous_volume_y is None:
+
+                previous_volume_y = current_volume_y
+
+            else:
+
+                # Calculate movement ONLY inside this block
+                movement = previous_volume_y - current_volume_y
+
+                # Volume UP
+                if movement > volume_threshold:
+
+                    current_volume = volume.GetMasterVolumeLevel()
+
+                    new_volume = min(
+                        current_volume + volume_step,
+                        volume_max
+                    )
+                    volume.SetMasterVolumeLevel(
+                        new_volume,
+                        None
+                    )
+                    previous_volume_y = current_volume_y
+
+                # Volume DOWN
+                elif movement < -volume_threshold:
+                    current_volume = volume.GetMasterVolumeLevel()
+                    new_volume = max(
+                        current_volume - volume_step,
+                        volume_min
+                    )
+                    volume.SetMasterVolumeLevel(
+                        new_volume,
+                        None
+                    )
+                    previous_volume_y = current_volume_y
+                else:
+                    previous_volume_y = None
 
         # ==================================================
         # GESTURE STABILIZATION
