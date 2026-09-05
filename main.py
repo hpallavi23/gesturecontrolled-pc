@@ -3,6 +3,7 @@
 import cv2
 import pyautogui
 import math
+import screen_brightness_control as sbc
 
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
@@ -11,7 +12,6 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from hand_detector import HandDetector
 from gesture_recognizer import GestureRecognizer
 from collections import Counter
-
 
 # Start camera
 cap = cv2.VideoCapture(0, cv2.CAP_MSMF)
@@ -60,6 +60,11 @@ scroll_threshold = 15
 previous_volume_y = None
 volume_threshold = 8
 volume_step = 2
+
+# Brightness control
+previous_brightness_y = None
+brightness_threshold = 8
+brightness_step = 5
 
 # Check if a hand was detected
 while True:
@@ -266,6 +271,7 @@ while True:
 
         # INDEX + PINKY -> VOLUME CONTROL
         volume_gesture = (
+            fingers[0] == 0 and
             fingers[1] == 1 and
             fingers[2] == 0 and
             fingers[3] == 0 and
@@ -324,6 +330,76 @@ while True:
                     previous_volume_y = current_volume_y
                 else:
                     previous_volume_y = None
+
+        # ==================================================
+        # THUMB + INDEX + PINKY -> BRIGHTNESS CONTROL
+        # ==================================================
+
+        brightness_gesture = (
+            fingers[0] == 1 and
+            fingers[1] == 1 and
+            fingers[2] == 0 and
+            fingers[3] == 0 and
+            fingers[4] == 1
+        )
+
+        if brightness_gesture:
+
+            # Index fingertip Y
+            index_y_brightness = landmarks[8][2]
+
+            # Pinky fingertip Y
+            pinky_y_brightness = landmarks[20][2]
+
+            # Average position of index + pinky
+            current_brightness_y = (
+                index_y_brightness + pinky_y_brightness
+            ) / 2
+
+            # First frame of brightness gesture
+            if previous_brightness_y is None:
+                previous_brightness_y = current_brightness_y
+            else:
+
+                # Calculate vertical movement
+                movement = (
+                    previous_brightness_y -
+                    current_brightness_y
+                )
+
+                # Brightness UP
+                if movement > brightness_threshold:
+                    current_brightness = sbc.get_brightness(display=0)[0]
+                    new_brightness = min(
+                        current_brightness + brightness_step,
+                        100
+                    )
+                    sbc.set_brightness(
+                        new_brightness,
+                        display=0
+                    )
+
+                    previous_brightness_y = current_brightness_y
+
+                # Brightness DOWN
+                elif movement < -brightness_threshold:
+                    current_brightness = sbc.get_brightness(display=0)[0]
+                    new_brightness = max(
+                        current_brightness - brightness_step,
+                        0
+                    )
+                    sbc.set_brightness(
+                        new_brightness,
+                        display=0
+                    )
+
+                    previous_brightness_y = current_brightness_y
+
+                else:
+                    previous_brightness_y = None
+
+        else:
+            previous_brightness_y = None
 
         # ==================================================
         # GESTURE STABILIZATION
