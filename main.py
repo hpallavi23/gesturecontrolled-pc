@@ -3,6 +3,7 @@
 import cv2
 import pyautogui
 import math
+import os
 import screen_brightness_control as sbc
 
 from ctypes import cast, POINTER
@@ -68,6 +69,9 @@ brightness_step = 5
 
 # Pause / Play control
 previous_pause_play_gesture = False
+
+# Screenshot control
+previous_ss_gesture = False
 
 # Check if a hand was detected
 while True:
@@ -417,6 +421,22 @@ while True:
         # Remember current gesture state
         previous_pause_play_gesture = pause_play_gesture
 
+        # FIST -> SCREENSHOT
+        ss_gesture = (
+            fingers == [0, 0, 0, 0, 0]
+        )
+        # Take screenshot only when fist first appears
+        if ss_gesture and not previous_ss_gesture:
+            print("FIST Triggered")
+            ss_number = 1
+            while os.path.exists(f"ss_{ss_number}.png"):
+                ss_number += 1
+            filename = f"ss_{ss_number}.png"
+            pyautogui.screenshot(filename)
+            print("Screenshot taken")
+
+        # Remember current fist state
+        previous_ss_gesture = ss_gesture
 
         # ==================================================
         # GESTURE STABILIZATION
