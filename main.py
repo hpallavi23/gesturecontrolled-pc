@@ -73,6 +73,12 @@ previous_pause_play_gesture = False
 # Screenshot control
 previous_ss_gesture = False
 
+# Slide control
+previous_slide_x = None
+slide_threshold = 100
+slide_cooldown = 0
+slide_cooldown_frames = 20
+
 # Check if a hand was detected
 while True:
 
@@ -437,6 +443,42 @@ while True:
 
         # Remember current fist state
         previous_ss_gesture = ss_gesture
+
+        # OPEN PAM -> SLIDE CONTROL
+        slide_gesture = (
+            fingers == [1, 1, 1, 1, 1]
+        )
+        # Reduce cooldown
+        if slide_cooldown > 0:
+            slide_cooldown -= 1
+        if slide_gesture:
+
+            # Use wrist X position to detect hand movement
+            current_slide_x = landmarks[0][1]
+
+            # First frame of open palm
+            if previous_slide_x is None:
+                previous_slide_x = current_slide_x
+
+            else:
+                # Calculate horizontal movement
+                movement = current_slide_x - previous_slide_x
+
+                # Swipe RIGHT -> Next Slide
+                if movement > slide_threshold and slide_cooldown == 0:
+                    pyautogui.press("right")
+                    print("Next Slide")
+                    slide_cooldown = slide_cooldown_frames
+                    previous_slide_x = None
+
+                # Swipe LEFT -> Previous Slide
+                elif movement < -slide_threshold and slide_cooldown == 0:
+                    pyautogui.press("left")
+                    print("Previous Slide")
+                    slide_cooldown = slide_cooldown_frames
+                    previous_slide_x = None
+        else:
+            previous_slide_x = None
 
         # ==================================================
         # GESTURE STABILIZATION
