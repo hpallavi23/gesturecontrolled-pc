@@ -66,6 +66,9 @@ previous_brightness_y = None
 brightness_threshold = 8
 brightness_step = 5
 
+# Pause / Play control
+previous_pause_play_gesture = False
+
 # Check if a hand was detected
 while True:
 
@@ -400,6 +403,20 @@ while True:
 
         else:
             previous_brightness_y = None
+
+            # OPEN PLAM -> PAUSE / PLAY
+            pause_play_gesture = (
+                fingers == [1, 1, 1, 1, 1]
+            )
+
+        # Trigger only when the palm appears
+        if pause_play_gesture and not previous_pause_play_gesture:
+            pyautogui.press("space")
+            print("Pause / Play")
+
+        # Remember current gesture state
+        previous_pause_play_gesture = pause_play_gesture
+
 
         # ==================================================
         # GESTURE STABILIZATION
