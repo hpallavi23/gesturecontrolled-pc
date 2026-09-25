@@ -114,10 +114,7 @@ while True:
         # Recognize gesture
         gesture = recognizer.recognize(fingers)
 
-
-        # ==================================================
         # MOUSE CONTROL
-        # ==================================================
 
         # Index finger controls mouse
         # Only when middle finger is NOT up
@@ -180,9 +177,7 @@ while True:
                 prev_y = current_y
 
 
-        # ==================================================
         # PINCH → LEFT CLICK
-        # ==================================================
 
 
         # Thumb tip = landmark 4
@@ -360,9 +355,8 @@ while True:
                 else:
                     previous_volume_y = None
 
-        # ==================================================
+
         # THUMB + INDEX + PINKY -> BRIGHTNESS CONTROL
-        # ==================================================
 
         brightness_gesture = (
             fingers[0] == 1 and
@@ -473,8 +467,8 @@ while True:
                 if tip_wrist < pip_wrist:
                     curled_fingers += 1
 
-            # At least 3 of the 4 fingers must actually be curled
-            fist_shape = curled_fingers >= 3
+        # At least 3 of the 4 fingers must actually be curled
+        fist_shape = curled_fingers >= 3
 
         ss_gesture = (
             fingers == [0, 0, 0, 0, 0]
@@ -540,9 +534,7 @@ while True:
         else:
             previous_slide_x = None
 
-        # ==================================================
         # GESTURE STABILIZATION
-        # ==================================================
 
         gesture_history.append(gesture)
 
@@ -567,10 +559,7 @@ while True:
             2
         )
 
-
-    # ==================================================
     # SHOW CAMERA WINDOW
-    # ==================================================
 
     cv2.imshow(
         "Gesture Controlled PC",
