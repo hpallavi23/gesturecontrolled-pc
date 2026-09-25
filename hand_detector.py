@@ -342,7 +342,7 @@ class HandDetector:
 
         if len(self.landmarks) != 21:
 
-            return [0, 0, 0, 0, 0]
+            return None
 
         points = {}
 

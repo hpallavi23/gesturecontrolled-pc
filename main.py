@@ -46,13 +46,17 @@ volume_min, volume_max, _ = volume.GetVolumeRange()
 # Mouse smoothing
 prev_x = screen_width // 2
 prev_y = screen_height // 2
-smoothening = 10
+smoothening = 5
 dead_zone = 8
 
-# Prevent repeated clicks while holding pinch
+# Click gesture stabilization
 previous_click_gesture = False
+click_gesture_count = 0
+click_required_frames = 5
+
 previous_right_click_gesture = False
-right_click_cooldown = 0
+right_click_gesture_count = 0
+right_click_required_frames = 5
 
 previous_scroll_y = None
 scroll_threshold = 15
@@ -69,15 +73,19 @@ brightness_step = 5
 
 # Pause / Play control
 previous_pause_play_gesture = False
+pause_play_count = 0
+pause_play_required_frames = 8
 
 # Screenshot control
 previous_ss_gesture = False
+ss_gesture_count = 0
+ss_required_frames = 5
 
 # Slide control
 previous_slide_x = None
-slide_threshold = 100
+slide_threshold = 20
 slide_cooldown = 0
-slide_cooldown_frames = 20
+slide_cooldown_frames = 15
 
 # Check if a hand was detected
 while True:
@@ -202,16 +210,18 @@ while True:
             fingers == [1, 1, 0, 0, 0]
         )
 
-        # Click only when pinch first appears
-        if click_gesture and not previous_click_gesture:
-
+        # Require left-click gesture to remain stable
+        if click_gesture:
+            click_gesture_count += 1
+        else:
+            click_gesture_count = 0
+            previous_click_gesture = False
+        # Click only after stable gesture appears
+        if click_gesture_count >= click_required_frames and not previous_click_gesture:
             pyautogui.click()
-
             print("Left Click")
+            previous_click_gesture = True
 
-
-        # Remember current pinch state
-        previous_click_gesture = click_gesture
 
         # THUMB + PINKY -> RIGHT CLICK
         # Distance between thumb and index
@@ -231,14 +241,20 @@ while True:
             fingers == [1, 0, 0, 0, 1]
         )
 
-        # Cooldown prevents repeated right clicks 
-        # while loading the gesture.
-        if right_click_cooldown > 0:
-            right_click_cooldown -= 1
-        if right_click_gesture and right_click_cooldown == 0:
+        # Require right-click gesture to remain stable
+        if right_click_gesture:
+            right_click_gesture_count += 1
+        else:
+            right_click_gesture_count = 0
+            previous_right_click_gesture = False
+        # Right click only after stable gesture appears
+        if(
+            right_click_gesture_count >= right_click_required_frames
+            and not previous_right_click_gesture
+        ):
             pyautogui.rightClick()
             print("Right Click")
-            right_click_cooldown = 15
+            previous_right_click_gesture = True
 
         # INDEX + MIDDLE -> SCROLL 
         scroll_gesture = (
@@ -414,35 +430,76 @@ while True:
         else:
             previous_brightness_y = None
 
-            # OPEN PLAM -> PAUSE / PLAY
-            pause_play_gesture = (
-                fingers == [1, 1, 1, 1, 1]
-            )
+      
+        # OPEN PALM -> PAUSE / PLAY
 
-        # Trigger only when the palm appears
-        if pause_play_gesture and not previous_pause_play_gesture:
-            pyautogui.press("space")
-            print("Pause / Play")
+        pause_play_gesture = (
+            fingers == [1, 1, 1, 1, 1]
+        )
 
-        # Remember current gesture state
-        previous_pause_play_gesture = pause_play_gesture
+        if pause_play_gesture:
+
+            pause_play_count += 1
+
+            print("Pause count:", pause_play_count)
+
+            if pause_play_count == pause_play_required_frames:
+                pyautogui.press("k")
+                print("Pause / Play")
+
+        else:
+            pause_play_count = 0
 
         # FIST -> SCREENSHOT
+        # Screenshot gesture: require both finger pattern AND actual curled fingers
+        fist_shape = False
+
+        if fingers == [0, 0, 0, 0, 0]:
+
+            curled_fingers = 0
+
+            for tip, pip in [(8, 6), (12, 10), (16, 14), (20, 18)]:
+
+                tip_wrist = math.hypot(
+                    landmarks[tip][1] - landmarks[0][1],
+                    landmarks[tip][2] - landmarks[0][2]
+                )
+
+                pip_wrist = math.hypot(
+                    landmarks[pip][1] - landmarks[0][1],
+                    landmarks[pip][2] - landmarks[0][2]
+                )
+
+                if tip_wrist < pip_wrist:
+                    curled_fingers += 1
+
+            # At least 3 of the 4 fingers must actually be curled
+            fist_shape = curled_fingers >= 3
+
         ss_gesture = (
             fingers == [0, 0, 0, 0, 0]
+            and fist_shape
         )
-        # Take screenshot only when fist first appears
-        if ss_gesture and not previous_ss_gesture:
+
+        if ss_gesture:
+            ss_gesture_count += 1
+        else:
+            ss_gesture_count = 0
+            previous_ss_gesture = False
+
+        if ss_gesture_count >= ss_required_frames and not previous_ss_gesture:
             print("FIST Triggered")
+
             ss_number = 1
             while os.path.exists(f"ss_{ss_number}.png"):
                 ss_number += 1
+
             filename = f"ss_{ss_number}.png"
             pyautogui.screenshot(filename)
             print("Screenshot taken")
 
-        # Remember current fist state
-        previous_ss_gesture = ss_gesture
+            previous_ss_gesture = True
+ 
 
         # OPEN PAM -> SLIDE CONTROL
         slide_gesture = (
@@ -477,6 +534,9 @@ while True:
                     print("Previous Slide")
                     slide_cooldown = slide_cooldown_frames
                     previous_slide_x = None
+                else:
+                    # Keep tracking hand movement
+                    previous_slide_x = current_slide_x
         else:
             previous_slide_x = None
 
@@ -526,3 +586,4 @@ while True:
 # Release camera
 cap.release()
 cv2.destroyAllWindows()
+
