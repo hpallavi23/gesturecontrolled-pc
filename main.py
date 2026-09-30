@@ -467,6 +467,9 @@ while True:
                 if tip_wrist < pip_wrist:
                     curled_fingers += 1
 
+        # Count curled fingers
+        curled_fingers = fingers.count(0)
+        
         # At least 3 of the 4 fingers must actually be curled
         fist_shape = curled_fingers >= 3
 
