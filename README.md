@@ -8,7 +8,7 @@ The project uses computer vision and hand landmark detection to recognize predef
 
 Gesture Controlled PC — Working Demo
 
-[▶️ Watch the Gesture Controlled PC Demo](https://youtu.be/SSBIWp5_1bk)
+[▶️ Watch the Gesture Controlled PC Demo](https://youtu.be/JFckQpFbzxE)
 
 The demo showcases the implemented gesture controls working in real time.
 
