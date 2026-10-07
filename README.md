@@ -17,15 +17,15 @@ The demo showcases the implemented gesture controls working in real time.
 
 The system currently supports 9 computer-control features:
 
-☝️ Index finger → Mouse movement
-👍 + ☝️ Thumb + Index → Left click
-👍 + 🤙 Thumb + Pinky → Right click
-✌️ Index + Middle → Scroll
-☝️ + 🤙 Index + Pinky → Volume control
-👍 + ☝️ + 🤙 Thumb + Index + Pinky → Brightness control
-🖐️ Open palm → YouTube play/pause
-✊ Fist → Screenshot capture
-🖐️ ↔️ Open palm + horizontal swipe → Presentation slide navigation
+☝️ Index finger → Mouse movement |
+👍 + ☝️ Thumb + Index → Left click |
+👍 + 🤙 Thumb + Pinky → Right click |
+✌️ Index + Middle → Scroll |
+☝️ + 🤙 Index + Pinky → Volume control |
+👍 + ☝️ + 🤙 Thumb + Index + Pinky → Brightness control |
+🖐️ Open palm → YouTube play/pause |
+✊ Fist → Screenshot capture |
+🖐️ ↔️ Open palm + horizontal swipe → Presentation slide navigation |
 
 
 ⚙️ How It Works
